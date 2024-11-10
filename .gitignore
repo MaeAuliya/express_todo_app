@@ -1,0 +1,32 @@
+# Mengabaikan folder node_modules
+node_modules/
+
+# Mengabaikan file log
+*.log
+
+# Mengabaikan file environment
+.env
+
+# Mengabaikan file build/output
+dist/
+build/
+
+# Mengabaikan file sistem
+.DS_Store
+Thumbs.db
+# Mengabaikan folder node_modules
+node_modules/
+
+# Mengabaikan file log
+*.log
+
+# Mengabaikan file environment
+.env
+
+# Mengabaikan file build/output
+dist/
+build/
+
+# Mengabaikan file sistem
+.DS_Store
+Thumbs.db
