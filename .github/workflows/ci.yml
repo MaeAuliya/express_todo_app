@@ -43,7 +43,3 @@ jobs:
       # Jalankan pengujian dengan Jest
       - name: Run tests
         run: npm test
-
-      # Opsional: Jalankan linter (jika ada linter yang digunakan)
-      - name: Run linter
-        run: npm run lint
