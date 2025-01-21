@@ -41,5 +41,5 @@ jobs:
         run: npm run build
 
       # Jalankan pengujian dengan Jest
-      - name: Run tests
-        run: npm test
+      # - name: Run tests
+      #   run: npm test

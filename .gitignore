@@ -1,5 +1,6 @@
 # Mengabaikan folder node_modules
 node_modules/
+data/
 
 # Mengabaikan file log
 *.log

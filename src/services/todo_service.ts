@@ -1,52 +1,58 @@
-import initializeDb from "../database/database";
 import { Todo } from "../models/todo";
+import { TodoRepository } from "../repositories/todo_repository";
 
-class TodoService {
-    private dbPromise = initializeDb();
+export class TodoService {
+	constructor(private readonly repository: TodoRepository) {}
 
-    public async create(data: Omit<Todo, 'id' | 'complete_status' | 'created_at' | 'updated_at' >): Promise<Todo> {
-        const db = await this.dbPromise;
-        const result = await db.run(
-            `INSERT INTO todos (title, description, complete_status, created_at, updated_at)
-            VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-            [data.title, data.description, false]
-        );
+	async create(
+		data: Omit<Todo, "id" | "complete_status" | "created_at" | "updated_at">,
+	): Promise<void> {
+		try {
+			await this.repository.create(data);
+		} catch (error) {
+			console.error("Error creating todo", error);
+			throw new Error("Error creating todo");
+		}
+	}
 
-        return this.getDetail(result.lastID ?? 0);
-    }
+	async getAll(): Promise<Todo[]> {
+		try {
+			const result = await this.repository.getAll();
+			return result;
+		} catch (error) {
+			console.error("Error getting all todos", error);
+			throw new Error("Error getting all todos");
+		}
+	}
 
-    public async getAll(): Promise<Todo[]> {
-        const db = await this.dbPromise;
-        const todos = await db.all(`SELECT * FROM todos`);
-        return todos;
-    }
+	async getDetail(id: number): Promise<Todo> {
+		try {
+			const result = await this.repository.getDetail(id);
+			return result;
+		} catch (error) {
+			console.error("Error getting detail todo", error);
+			throw new Error("Error getting detail todo");
+		}
+	}
 
-    public async getDetail(id: number): Promise<Todo> {
-        const db = await this.dbPromise;
-        const todo = await db.get(`SELECT * FROM todos WHERE id = ?`, id);
-        return todo;
-    }
+	async update(
+		id: number,
+		data: Partial<Omit<Todo, "id" | "updated_at">>,
+	): Promise<void> {
+		try {
+			await this.repository.update(id, data);
+		} catch (error) {
+			console.error("Error updating todo", error);
+			throw new Error("Error updating todo");
+		}
+	}
 
-    public async update(id: number, data: Partial<Omit<Todo, 'id' | 'updated_at'>>): Promise<Todo> {
-        const db = await this.dbPromise;
-        await db.run(
-            `UPDATE todos 
-             SET title = COALESCE(?, title), 
-                 description = COALESCE(?, description), 
-                 complete_status = COALESCE(?, complete_status), 
-                 updated_at = CURRENT_TIMESTAMP 
-             WHERE id = ?`,
-            data.title, data.description, data.complete_status !== undefined ? (data.complete_status ? 1 : 0) : undefined, id
-        );
-
-        return this.getDetail(id);
-    }
-
-    public async delete(id: number): Promise<boolean> {
-        const db = await this.dbPromise;
-        const result = await db.run(`DELETE FROM todos WHERE id = ?`, id);
-        return (result.changes ?? 0) > 0;
-    }
+	async delete(id: number): Promise<boolean> {
+		try {
+			return this.repository.delete(id);
+		} catch (error) {
+			console.error("Error deleting todo", error);
+			throw new Error("Error deleting todo");
+		}
+	}
 }
-
-export default new TodoService();

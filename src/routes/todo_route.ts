@@ -1,12 +1,22 @@
 import { Router } from "express";
-import TodoController from "../controllers/todo_controller";
+import { TodoController } from "../controllers/todo_controller";
 
-const router = Router();
+export class TodoRouter {
+	public router: Router;
 
-router.get("/getAll", TodoController.getAll);
-router.get("/getDetail/:id", TodoController.getDetail);
-router.post("/create", TodoController.create);
-router.put("/update/:id", TodoController.update);
-router.delete("/delete/:id", TodoController.delete);
+	constructor(
+		private controller: TodoController,
+		router: Router,
+	) {
+		this.router = router;
+		this.initRoute();
+	}
 
-export default router;
+	private initRoute() {
+		this.router.get("/todo", this.controller.getAll);
+		this.router.get("/todo/:id", this.controller.getDetail);
+		this.router.post("/todo", this.controller.create);
+		this.router.put("/todo/:id", this.controller.update);
+		this.router.delete("/todo/:id", this.controller.delete);
+	}
+}

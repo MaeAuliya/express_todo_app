@@ -1,58 +1,97 @@
 import { Request, Response } from "express";
-import TodoService from "../services/todo_service";
+import { TodoService } from "../services/todo_service";
+import { ZodError } from "zod";
+import { TodoValidator } from "../utils/validator";
 
-class TodoController {
-    public create = async (req: Request, res: Response): Promise<void> => {
-        const { title, description} = req.body;
+export class TodoController {
+	constructor(private readonly service: TodoService) {}
 
-        if (typeof title !== 'string' || title === null) {
-            res.status(400).json({
-                message: "Invalid request data",
-                error: "title must be a string",
-            });
-        } else if (typeof description !== 'string'|| description === null) {
-            res.status(400).json({
-                message: "Invalid request data",
-                error: "description must be a string"
-            });
-        } else {
-            const newTodo = await TodoService.create(req.body);
-            res.status(201).json({ message: "Todo created", data: newTodo });
-        }
-    };
+	public create = async (req: Request, res: Response): Promise<void> => {
+		try {
+			const validateData = TodoValidator.todoSchema.parse(req.body);
+			const result = await this.service.create(validateData);
+			res.status(201).json({ message: "Todo created", data: result });
+		} catch (error) {
+			if (error instanceof ZodError) {
+				res
+					.status(400)
+					.json({ message: "Validation failed", error: error.errors });
+			} else {
+				console.error("Error creating todo:", error);
+				res.status(500).json({ message: "Internal server error" });
+			}
+		}
+	};
 
-    public getAll = async (req: Request, res: Response): Promise<void> => {
-        const todos = await TodoService.getAll();
-        res.status(200).json({ message: "Success", data: todos });
-    };
+	public getAll = async (req: Request, res: Response): Promise<void> => {
+		try {
+			const todos = await this.service.getAll();
+			res.status(200).json({ message: "Success", data: todos });
+		} catch (error) {
+			console.error("Error getting todos:", error);
+			res.status(500).json({ message: "Internal server error" });
+		}
+	};
 
-    public getDetail= async (req: Request, res: Response): Promise<void> => {
-        const selectedTodo = await TodoService.getDetail(parseInt(req.params.id));
-        if(selectedTodo) {
-            res.status(200).json({ message: "Success", data: selectedTodo });
-        } else {
-            res.status(404).json({ message: "Todo not found" });
-        }
-    }
+	public getDetail = async (req: Request, res: Response): Promise<void> => {
+		try {
+			const validate = TodoValidator.idSchema.parse(Number(req.params.id));
 
-    public update = async (req: Request, res: Response): Promise<void> => {
-        const updatedTodo = await TodoService.update(parseInt(req.params.id), req.body);
-        if(updatedTodo) {
-            res.status(200).json({ message: "Todo updated", data: updatedTodo });
-        } else {
-            res.status(404).json({ message: "Todo not found" });
-        }
-    }
+			const result = await this.service.getDetail(validate);
 
-    public delete = async (req: Request, res: Response): Promise<void> => {
-        const deletedTodo = await TodoService.delete(parseInt(req.params.id));
-        if(deletedTodo) {
-            res.status(200).json({ message: "Todo deleted" });
-        } else {
-            res.status(404).json({ message: "Todo not found" });
-        }
-    }
+			res.status(200).json({ message: "Success", data: result });
+		} catch (error) {
+			if (error instanceof ZodError) {
+				res
+					.status(400)
+					.json({ message: "Validation failed", error: error.errors[0].message });
+			} else {
+				console.error("Error fetching detail todo:", error);
+				res.status(500).json({ message: "Internal server error" });
+			}
+		}
+	};
+
+	public update = async (req: Request, res: Response): Promise<void> => {
+		try {
+			const validateData = TodoValidator.todoSchema.parse(req.body);
+			const validateId = TodoValidator.idSchema.parse(Number(req.params.id));
+
+			const result = await this.service.update(validateId, validateData);
+
+			res.status(201).json({ message: "Todo updated", data: result });
+		} catch (error) {
+			if (error instanceof ZodError) {
+				res
+					.status(400)
+					.json({ message: "Validation failed", error: error.errors });
+			} else {
+				console.error("Error updating todo:", error);
+				res.status(500).json({ message: "Internal server error" });
+			}
+		}
+	};
+
+	public delete = async (req: Request, res: Response): Promise<void> => {
+		try {
+			const validateId = TodoValidator.idSchema.parse(Number(req.params.id));
+			const result = await this.service.delete(validateId);
+
+			if(result){
+				res.status(200).json({ message: "Todo deleted" });
+			} else {
+				res.status(404).json({ message: "Todo not found" });
+			}
+
+		} catch (error) {
+			if (error instanceof ZodError) {
+				res
+					.status(400)
+					.json({ message: "Validation failed", error: error.errors });
+			} else {
+				console.error("Error deleting todo:", error);
+				res.status(500).json({ message: "Internal server error" });
+			}
+		}
+	};
 }
-
-
-export default new TodoController();
